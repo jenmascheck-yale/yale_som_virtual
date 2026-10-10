@@ -29,6 +29,24 @@ Open http://localhost:5173 and click **Click to walk in**.
 
 **Phone / tablet:** tap **Tap to walk in**. The left-thumb joystick walks (push it all the way to sprint), dragging anywhere else looks around, and there are on-screen jump and pause buttons. On a laptop, click **Use on-screen joystick** to try the phone controls. WASD still works in that mode.
 
+## AI professors (FastAPI + PydanticAI back end)
+
+Every professor is a PydanticAI agent you can talk to. Look at one (the crosshair turns into a ring), then **click** (or tap **Talk to ...** on a phone). They turn to face you, answer in character, and speak out loud with the browser's built-in voices. **Prof. Zaman (AI)** stands in Room 2400 (MBA Class of 1980 Classroom) next to Dumbledore.
+
+- `backend/app/personas.py`: each professor's persona, room, greeting and voice; seeded into the `professors` table of `backend/professors.db` on startup.
+- `backend/app/agents.py`: one agent per professor. Instructions are built from the database (persona + their course from `data/yale_som.db` + the full catalog). Tools: `lookup_course`, `search_courses`, and OpenAI web search.
+- `backend/app/main.py`: `GET /api/professors`, `POST /api/chat`, `GET /api/health`.
+
+Setup (Windows PowerShell, from `backend/`):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m uvicorn app.main:app --port 8000
+```
+
+Put `OPENAI_API_KEY` and `OPENAI_MODEL` (see `backend/.env.example`) in a `.env` file **outside** this repo, in any parent folder; the back end finds it by walking up. Then run `npm run dev` as usual; Vite proxies `/api` to port 8000. The GitHub Pages build has no back end, so chat there shows an "offline" note.
+
 ## How it's built
 
 - `src/layout.js`: the floor plan in meters (+x east, -z north). It holds the drums, library, Beinecke, stairs, meeting rooms, wall colliders, and room lookup. Each classroom faces the courtyard, with the whiteboard and podium on the inner side and stadium-seating rows (32 cm risers) stepping up toward the outer wall; its two doors are at the front corners. You climb the center-aisle steps one riser at a time.

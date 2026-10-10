@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import Professor, { PROFESSORS } from './Professor.jsx'
+import Zaman from './Zaman.jsx'
 import { DRUMS, LECTERNS } from './layout.js'
 
 // which Hogwarts professor teaches in which classroom (matches the slide decks)
@@ -49,6 +50,11 @@ export default function Faculty() {
       }),
     [],
   )
+  // Prof. Zaman (AI) teaches MGT 409 next to Dumbledore, on the other side of the lectern
+  const zaman = useMemo(() => {
+    const { fc, back, t, half, rot } = DRUMS.find((d) => d.id === '2400').front
+    return { pos: [fc[0] + back[0] * 1.35 + t[0] * half * 0.62, 0, fc[1] + back[1] * 1.35 + t[1] * half * 0.62], rot }
+  }, [])
   return (
     <>
       {items.map((it, i) => (
@@ -59,6 +65,7 @@ export default function Faculty() {
           </mesh>
         </group>
       ))}
+      <Zaman position={zaman.pos} rotation={zaman.rot} />
       {/* Hagrid keeps an eye on the Labubus in the courtyard */}
       <Professor who="hagrid" position={[-10.5, -5, -2]} rotation={Math.PI / 2} />
     </>

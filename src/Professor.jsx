@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useTalkable } from './npc.js'
 
 // Cartoon wizard professors built from primitives. Each preset sets robe, hair, beard, hat,
 // glasses, size, and a prop; the shared body handles the robe, head, arms and wand.
@@ -33,7 +34,7 @@ export const PROFESSORS = {
   hagrid: { name: 'Rubeus Hagrid', robe: '#5b4330', trim: '#3b2c1f', skin: '#e2b28f', hair: '#2e2219', height: 2.7 },
 }
 
-function Face({ who, P }) {
+function Face({ who, P, mouthRef }) {
   const eyeY = 1.725
   const dark = '#1d1410'
   const eyes = (
@@ -62,10 +63,11 @@ function Face({ who, P }) {
         />
       ))}
       {/* mouth: Lockhart beams, Snape and McGonagall are not amused */}
+      {/* mouth (opens and closes while the professor is speaking) */}
       {who === 'lockhart' ? (
-        <B g={BOX} c="#ffffff" p={[0, 1.645, 0.118]} s={[0.07, 0.022, 0.01]} />
+        <mesh ref={mouthRef} userData={{ baseY: 0.022 }} geometry={BOX} material={m('#ffffff')} position={[0, 1.645, 0.118]} scale={[0.07, 0.022, 0.01]} />
       ) : (
-        <B g={BOX} c="#6b2f2a" p={[0, 1.645, 0.118]} r={[0, 0, 0]} s={[who === 'snape' ? 0.045 : 0.055, 0.008, 0.008]} />
+        <mesh ref={mouthRef} userData={{ baseY: 0.008 }} geometry={BOX} material={m('#6b2f2a')} position={[0, 1.645, 0.118]} scale={[who === 'snape' ? 0.045 : 0.055, 0.008, 0.008]} />
       )}
     </>
   )
@@ -213,16 +215,17 @@ function Extras({ who, P }) {
   }
 }
 
-export default function Professor({ who, position = [0, 0, 0], rotation = 0, phase = 0 }) {
+export default function Professor({ who, position = [0, 0, 0], rotation = 0, phase = 0, talkId = who }) {
   const P = PROFESSORS[who]
   const s = P.height / 1.9
   const wide = who === 'hagrid' ? 1.3 : who === 'slughorn' ? 1.15 : 1
   const root = useRef()
   const wandArm = useRef()
+  const mouth = useRef()
+  useTalkable(talkId, root, rotation, (t) => Math.sin((t + phase) * 0.4) * 0.35, mouth) // idle: scanning the room
   const glow = useMemo(() => m('#ffd6ea', { emissive: '#ff4fa3', emissiveIntensity: 2 }), [])
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase
-    root.current.rotation.y = rotation + Math.sin(t * 0.4) * 0.35 // scanning the room
     const flick = Math.max(0, Math.sin(t * 1.3)) // raise the wand every few seconds
     wandArm.current.rotation.x = -0.3 - flick * 1.4
     wandArm.current.rotation.z = -0.25 - flick * 0.3
@@ -262,7 +265,7 @@ export default function Professor({ who, position = [0, 0, 0], rotation = 0, pha
         {[-1, 1].map((sx) => (
           <B key={sx} c={P.skin} p={[0.122 * sx, 1.7, 0]} s={[0.02, 0.035, 0.02]} />
         ))}
-        <Face who={who} P={P} />
+        <Face who={who} P={P} mouthRef={mouth} />
         <Extras who={who} P={P} />
       </group>
     </group>
